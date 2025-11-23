@@ -2,16 +2,25 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
-  <title>Interaktiv Hemsida med Meny</title>
+  <title>En hjälpsida för medlemmarna i Excalibur i spelet Forge of Empire </title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <h1>Min interaktiva hemsida</h1>
+    <h1></h1>
 
     <nav>
       <ul>
-        <li><a href="#" data-section="home">Hem</a></li>
+        <div class="dropdown">
+          <button class="dropbtn"><a href="#" data-section="home">Om oss</a></button>
+          <div class="dropdown-content">
+            <ul><li><a href="#" data-section="home">Kontakt</a></li></ul>
+            <ul><li><a href="#" data-section="home">Link 2</a></li></ul>
+          
+        </div></div>
+        </li>
+
+        
         <li><a href="#" data-section="about">Slagfältet</a></li>
         <li><a href="#" data-section="contact">Expeditionen</a>
         <li><a href="#" data-section="contact">Kvantum</a>
@@ -54,6 +63,7 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
