@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interaktiv webbplats</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --surface: #f3f4f6;
+      --border: #e5e7eb;
+    }
+    .dark {
+      --bg: #0b0f1a;
+      --text: #e5e7eb;
+      --muted: #9aa3af;
+      --primary: #60a5fa;
+      --surface: #0f172a;
+      --border: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg); color: var(--text);
+    }
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: var(--bg); border-bottom: 1px solid var(--border);
+    }
+    nav {
+      max-width: 1100px; margin: 0 auto; padding: 12px 16px;
+      display: flex; gap: 12px; align-items: center; justify-content: space-between;
+    }
+    .brand { font-weight: 700; letter-spacing: 0.2px; }
+    .nav-actions { display: flex; gap: 8px; align-items: center; }
+    button, .btn {
+      appearance: none; border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer;
+    }
+    .btn-primary { background: var(--primary); color: #fff; border-color: transparent; }
+    main { max-width: 1100px; margin: 20px auto; padding: 0 16px; display: grid; gap: 20px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+    }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    input, select, textarea {
+      width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg);
+      color: var(--text);
+    }
+    label { font-size: 14px; color: var(--muted); display: block; margin-bottom: 6px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .list { display: flex; flex-direction: column; gap: 8px; }
+    .list-item {
+      display: flex; align-items: center; justify-content: space-between;
+      border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: var(--bg);
+    }
+    .chip { font-size: 12px; color: var(--muted); }
+    .footer { color: var(--muted); text-align: center; padding: 20px 0; }
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center;
+    }
+    .modal {
+      width: min(560px, 92vw); background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; }
+    .hidden { display: none !important; }
+    @media (max-width: 720px) { .row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <div class="brand">Min interaktiva sida</div>
+      <div class="nav-actions">
+        <button id="themeToggle">Mörkt läge</button>
+        <button class="btn btn-primary" id="openModal">Ny post</button>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Snabböversikt</h2>
+      <div class="grid">
+        <div>
+          <p>Detta är en enkel, interaktiv grund: tema, lista, sök, modal och formulär.</p>
+          <p class="chip">Tips: All data sparas i localStorage.</p>
+        </div>
+        <div class="row">
+          <div>
+            <label for="search">Sök i listan</label>
+            <input id="search" placeholder="Sök efter titel eller tagg" />
+          </div>
+          <div>
+            <label for="sort">Sortera</label>
+            <select id="sort">
+              <option value="createdDesc">Nyast först</option>
+              <option value="createdAsc">Äldst först</option>
+              <option value="titleAsc">Titel A–Ö</option>
+              <option value="titleDesc">Titel Ö–A</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Lista</h2>
+      <div id="list" class="list"></div>
+      <p class="chip" id="emptyState">Inga poster än. Lägg till en via “Ny post”.</p>
+    </section>
+
+    <section class="card">
+      <h2>Exempel: hämta data</h2>
+      <div class="row">
+        <div>
+          <button id="fetchBtn">Hämta exempeldata</button>
+        </div>
+        <div>
+          <pre id="fetchResult" style="max-height:180px; overflow:auto; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:8px;"></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="backdrop" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Lägg till ny post</h3>
+        <button id="closeModal">Stäng</button>
+      </div>
+      <div class="modal-body">
+        <form id="createForm">
+          <div class="row">
+            <div>
+              <label for="title">Titel</label>
+              <input id="title" required minlength="2" maxlength="80" placeholder="T.ex. ‘Mina idéer’" />
+            </div>
+            <div>
+              <label for="tags">Taggar (komma-separerat)</label>
+              <input id="tags" placeholder="projekt, idéer, personligt" />
+            </div>
+          </div>
+          <div style="margin-top:12px;">
+            <label for="content">Innehåll</label>
+            <textarea id="content" rows="4" required placeholder="Skriv något..."></textarea>
+          </div>
+          <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end;">
+            <button type="button" id="resetForm">Rensa</button>
+            <button class="btn btn-primary" type="submit">Spara</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    © <span id="year"></span> – Byggt med ren HTML, CSS och JS
+  </footer>
+
+  <script>
+    // State
+    const state = {
+      items: JSON.parse(localStorage.getItem('items') || '[]'),
+      query: '',
+      sort: 'createdDesc',
+      dark: localStorage.getItem('dark') === '1'
+    };
+
+    // Elements
+    const els = {
+      list: document.getElementById('list'),
+      empty: document.getElementById('emptyState'),
+      search: document.getElementById('search'),
+      sort: document.getElementById('sort'),
+      themeToggle: document.getElementById('themeToggle'),
+      openModal: document.getElementById('openModal'),
+      closeModal: document.getElementById('closeModal'),
+      backdrop: document.getElementById('backdrop'),
+      form: document.getElementById('createForm'),
+      title: document.getElementById('title'),
+      tags: document.getElementById('tags'),
+      content: document.getElementById('content'),
+      resetForm: document.getElementById('resetForm'),
+      year: document.getElementById('year'),
+      fetchBtn: document.getElementById('fetchBtn'),
+      fetchResult: document.getElementById('fetchResult')
+    };
+
+    // Init
+    document.body.classList.toggle('dark', state.dark);
+    els.themeToggle.textContent = state.dark ? 'Ljust läge' : 'Mörkt läge';
+    els.search.value = state.query;
+    els.sort.value = state.sort;
+    els.year.textContent = new Date().getFullYear();
+
+    // Render
+    function render() {
+      const q = state.query.toLowerCase().trim();
+      let items = [...state.items];
+
+      // sortering
+      const compare = {
+        createdDesc: (a, b) => b.created - a.created,
+        createdAsc: (a, b) => a.created - b.created,
+        titleAsc: (a, b) => a.title.localeCompare(b.title),
+        titleDesc: (a, b) => b.title.localeCompare(a.title),
+      }[state.sort];
+      items.sort(compare);
+
+      // filtrering
+      const filtered = items.filter(i => {
+        const hay = (i.title + ' ' + (i.tags||[]).join(' ')).toLowerCase();
+        return hay.includes(q);
+      });
+
+      els.list.innerHTML = '';
+      els.empty.classList.toggle('hidden', filtered.length > 0);
+
+      for (const item of filtered) {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.innerHTML = `
+          <div>
+            <strong>${escapeHtml(item.title)}</strong>
+            <div class="chip">${item.tags?.map(t => '#' + escapeHtml(t)).join(' ') || ''}</div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button data-id="${item.id}" class="edit">Redigera</button>
+            <button data-id="${item.id}" class="delete">Ta bort</button>
+          </div>
+        `;
+        els.list.appendChild(div);
+      }
+
+      // Händelser för list-knappar
+      els.list.querySelectorAll('.delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          state.items = state.items.filter(i => i.id !== id);
+          persist();
+          render();
+        });
+      });
+      els.list.querySelectorAll('.edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          const item = state.items.find(i => i.id === id);
+          if (!item) return;
+          openModal();
+          els.title.value = item.title;
+          els.tags.value = item.tags?.join(', ') || '';
+          els.content.value = item.content;
+          els.form.dataset.editId = id;
+        });
+      });
+    }
+
+    function persist() {
+      localStorage.setItem('items', JSON.stringify(state.items));
+    }
+
+    // Modal
+    function openModal() { els.backdrop.style.display = 'flex'; }
+    function closeModal() {
+      els.backdrop.style.display = 'none';
+      els.form.reset();
+      delete els.form.dataset.editId;
+    }
+
+    // Utils
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Events
+    els.search.addEventListener('input', e => { state.query = e.target.value; render(); });
+    els.sort.addEventListener('change', e => { state.sort = e.target.value; render(); });
+
+    els.themeToggle.addEventListener('click', () => {
+      state.dark = !state.dark;
+      document.body.classList.toggle('dark', state.dark);
+      els.themeToggle.textContent = state.dark ? 'Ljust läge' : 'Mörkt läge';
+      localStorage.setItem('dark', state.dark ? '1' : '0');
+    });
+
+    els.openModal.addEventListener('click', openModal);
+    els.closeModal.addEventListener('click', closeModal);
+    els.backdrop.addEventListener('click', (e) => {
+      if (e.target === els.backdrop) closeModal();
+    });
+
+    els.resetForm.addEventListener('click', () => { els.form.reset(); });
+
+    els.form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = els.title.value.trim();
+      const content = els.content.value.trim();
+      if (!title || !content) return;
+
+      const tags = els.tags.value
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean);
+
+      const editing = els.form.dataset.editId;
+      if (editing) {
+        state.items = state.items.map(i => i.id === editing ? {
+          ...i, title, content, tags
+        } : i);
+      } else {
+        const id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+        state.items.push({ id, title, content, tags, created: Date.now() });
+      }
+
+      persist();
+      render();
+      closeModal();
+    });
+
+    // Exempel: hämta data (publik API)
+    els.fetchBtn.addEventListener('click', async () => {
+      els.fetchBtn.disabled = true;
+      els.fetchBtn.textContent = 'Hämtar...';
+      els.fetchResult.textContent = '';
+      try {
+        const res = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=3');
+        const data = await res.json();
+        els.fetchResult.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        els.fetchResult.textContent = 'Kunde inte hämta data: ' + err.message;
+      } finally {
+        els.fetchBtn.disabled = false;
+        els.fetchBtn.textContent = 'Hämta exempeldata';
+      }
+    });
+
+    // Första render
+    render();
+  </script>
+</body>
+</html>
