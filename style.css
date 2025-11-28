@@ -9,6 +9,9 @@ header {
   background: #2563eb;
   color: white;
   padding: 1rem;
+  img {
+  border-radius: 50%;
+}
 }
 
 /* Dropdown Button */
